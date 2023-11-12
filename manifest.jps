@@ -1,0 +1,51 @@
+type: install
+version: 1.0
+name: SonarQube
+categories: ["apps/project-management", "apps/dev-and-admin-tools"]
+displayName: SonarQube
+logo: https://assets-eu-01.kc-usercontent.com/4d0ea010-01c1-0154-89cd-f9c6922ec008/aedb7b5e-8556-4840-a69c-bce396891b0e/sonar-logo-horizontal-dark-bg.svg?w=170&h=42&auto=format&fit=crop
+ssl: true
+description: |
+  The code quality tool for better code
+  
+  https://www.sonarsource.com/
+
+globals:
+  db_user: sonar
+  db_pass: ${fn.password(15)}
+  admin_name: admin
+  admin_pass: ${fn.password(10)}
+
+nodes:
+  - image: sonarqube:community
+    count: 1
+    cloudlets: 32
+    nodeGroup: cp
+    env:
+      SONARQUBE_JDBC_USERNAME: ${globals.db_user}
+      SONARQUBE_JDBC_PASSWORD: ${globals.db_pass}
+      SONARQUBE_JDBC_URL: jdbc:postgresql://postgresql:5432/sonar
+    links:
+      - sqldb:postgresql
+
+  - image: postgres:15.4-alpine
+    count: 1
+    cloudlets: 8
+    nodeGroup: sqldb
+    env:
+      POSTGRES_USER: ${globals.db_user}
+      POSTGRES_PASSWORD: ${globals.db_pass}
+
+onInstall:
+  script: |
+    var adminUsername = "${globals.admin_name}";
+    var adminPassword = "${globals.admin_pass}";
+    var dbUsername = "${globals.db_user}";
+    var dbPassword = "${globals.db_pass}";
+
+    var response = {
+      'result': 'success',
+      'message': 'SonarQube is ready\nAdmin Username: ' + adminUsername + '\nAdmin Password: ' + adminPassword + '\nDatabase Username: ' + dbUsername + '\nDatabase Password: ' + dbPassword,
+      'email': 'SonarQube credentials\nAdmin Username: ' + adminUsername + '\nAdmin Password: ' + adminPassword + '\nDatabase Username: ' + dbUsername + '\nDatabase Password: ' + dbPassword
+    };
+    return response;
